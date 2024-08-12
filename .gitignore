@@ -1,0 +1,19 @@
+# Ignore all storage.json files in any directory
+**/storage.json
+
+# Ignore other specific files or directories
+# 忽略测试临时文件
+**/test/
+# 忽略本地生成的配置文件
+**/cfg/
+# 忽略数据缓存目录
+**/db/
+# 忽略本地执行的go-release文件
+dist
+# 忽略所有日志文件
+**/*.log
+**/log/
+# 忽略测试图片
+**/test_img.*
+# 忽略所有data目录
+**/data
