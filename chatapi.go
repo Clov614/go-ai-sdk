@@ -52,7 +52,7 @@ func NewAIClient(authorization string, model string, sendurl string, proxyAddr s
 func (a AIClient) SendByStreaming(req Request) (resp Response[IncrementalResponse], err error) {
 	resp, err = doSend[IncrementalResponse](a, a.convertReq(req))
 	if err != nil {
-		return resp, fmt.Errorf("send incremental response failed: %s", err.Error())
+		return resp, fmt.Errorf("send incremental response failed: %w", err)
 	}
 	return resp, nil
 }
@@ -105,6 +105,7 @@ func doSend[T IncrementalResponse | FunctionCallResponse](a AIClient, request Ch
 	if err != nil {
 		return response, fmt.Errorf("doSend ReadAll(resp.body): %w", err)
 	}
+	// nolint
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return response, fmt.Errorf("doSend json.Unmarshal(body, &response): %w", err)
