@@ -16,6 +16,7 @@ type AICfg struct {
 	Model         string `yaml:"model,omitempty" comment:"使用的模型ID 默认: gpt-4o-mini"`
 	Url           string `yaml:"api_url" comment:"api地址 默认: https://api.openai.com/v1/chat/completions"`
 	ProxyAddr     string `yaml:"proxy_address,omitempty" comment:"代理地址 (可选)"`
+	EndPoint      string `yaml:"end_point" comment:"请求节点 默认: /v1/chat/completions"`
 	// 功能设置项
 	Timeout    int `yaml:"timeout" comment:"请求超时时间，单位秒，默认 5s"`
 	HistoryNum int `yaml:"history_num,omitempty" comment:"最大上下文长度 默认: 10"`
@@ -26,6 +27,7 @@ const (
 	defaultModel       = "gpt-4o-mini"
 	defaultUrl         = "https://api.openai.com/v1/chat/completions"
 	defaultHistoryNum  = 10 // 默认上下文长度
+	defaultEndPoint    = "/v1/chat/completions"
 )
 
 var Config = AICfg{
@@ -33,6 +35,7 @@ var Config = AICfg{
 	Model:       defaultModel,
 	Url:         defaultUrl,
 	HistoryNum:  defaultHistoryNum,
+	EndPoint:    defaultEndPoint,
 }
 
 var defaultPath = "./cfg/"

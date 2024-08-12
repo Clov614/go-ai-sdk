@@ -10,6 +10,7 @@ const (
 	authorizationError  Ret = iota + 1 // 鉴权错误，请检查是否正确填写'OPEN-API-KEY'
 	modelUnSupportError                // 模型不支持，请检查配置文件
 	proxyUnUsefulError                 // 代理错误，请检查配置文件
+	paramUnSupportError                // 参数错误
 )
 
 type BaseResponse struct {
