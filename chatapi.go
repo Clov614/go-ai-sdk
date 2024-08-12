@@ -5,7 +5,6 @@
 package ai_sdk
 
 import (
-	"ai-sdk/cfg"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -40,10 +39,10 @@ func NewAIClient(authorization string, model string, sendurl string, proxyAddr s
 	} else {
 		client.ProxyAddr = proxy
 	}
-	if cfg.Config.Timeout < 5 {
+	if Config.Timeout < 5 {
 		client.timeout = 5
 	}
-	client.timeout = cfg.Config.Timeout
+	client.timeout = Config.Timeout
 	client.client = &http.Client{
 		Timeout: time.Duration(client.timeout) * time.Second,
 	}
@@ -115,23 +114,23 @@ func doSend[T IncrementalResponse | FunctionCallResponse](a AIClient, request Ch
 
 func init() {
 	aiclient = &AIClient{
-		Authorization: "Bearer " + cfg.Config.Authorization,
-		ContentType:   cfg.Config.ContentType,
-		Model:         cfg.Config.Model,
-		Url:           cfg.Config.Url,
+		Authorization: "Bearer " + Config.Authorization,
+		ContentType:   Config.ContentType,
+		Model:         Config.Model,
+		Url:           Config.Url,
 	}
-	if cfg.Config.ProxyAddr != "" {
-		proxy, err := url.Parse(cfg.Config.ProxyAddr)
+	if Config.ProxyAddr != "" {
+		proxy, err := url.Parse(Config.ProxyAddr)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid proxy URL")
 		} else {
 			aiclient.ProxyAddr = proxy
 		}
 	}
-	if cfg.Config.Timeout < 5 {
+	if Config.Timeout < 5 {
 		aiclient.timeout = 5
 	}
-	aiclient.timeout = cfg.Config.Timeout
+	aiclient.timeout = Config.Timeout
 	aiclient.client = &http.Client{
 		Timeout: time.Duration(aiclient.timeout) * time.Second,
 	}
