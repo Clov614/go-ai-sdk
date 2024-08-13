@@ -5,10 +5,10 @@
 package ai_sdk
 
 import (
-	"ai-sdk/config"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Clov614/go-ai-sdk/config"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"

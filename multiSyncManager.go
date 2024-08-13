@@ -5,8 +5,8 @@
 package ai_sdk
 
 import (
-	"ai-sdk/config"
 	"fmt"
+	"github.com/Clov614/go-ai-sdk/config"
 	"sync"
 	"time"
 )

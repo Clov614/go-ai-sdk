@@ -5,9 +5,9 @@
 package config
 
 import (
-	"ai-sdk/logging"
-	"ai-sdk/utils/configutil"
 	"errors"
+	"github.com/Clov614/go-ai-sdk/logging"
+	"github.com/Clov614/go-ai-sdk/utils/configutil"
 	"os"
 )
 

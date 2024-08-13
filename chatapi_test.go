@@ -5,7 +5,7 @@
 package ai_sdk
 
 import (
-	"ai-sdk/config"
+	"github.com/Clov614/go-ai-sdk/config"
 	"net/http"
 	"net/url"
 	"reflect"
