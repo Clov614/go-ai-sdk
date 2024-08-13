@@ -5,16 +5,16 @@
 package ai_sdk
 
 type Request struct {
-	Messages   *[]ChatMessage
+	Messages   []ChatMessage
 	Tools      *[]Tool
 	ToolChoice string
 }
 
 type ChatCompletionRequest struct {
-	Model      string         `json:"model"`
-	Messages   *[]ChatMessage `json:"messages"`
-	Tools      *[]Tool        `json:"tools,omitempty"`       // 可选
-	ToolChoice string         `json:"tool_choice,omitempty"` // 默认 auto
+	Model      string        `json:"model"`
+	Messages   []ChatMessage `json:"messages"`
+	Tools      *[]Tool       `json:"tools,omitempty"`       // 可选
+	ToolChoice string        `json:"tool_choice,omitempty"` // 默认 auto
 }
 
 type ChatMessage struct {

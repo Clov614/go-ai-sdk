@@ -5,6 +5,7 @@
 package ai_sdk
 
 import (
+	"ai-sdk/config"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -37,16 +38,16 @@ func TestAIClient_SendByFuncCall(t *testing.T) {
 			name: "TestFunctionCall",
 			fields: fields{
 				Authorization: "sk-6m0S1PzHRCxtdrSGbh9ABH5uIdQYHKXqNxg4umhJ2LJ5pypc",
-				ContentType:   defaultContentType,
-				Model:         defaultModel,
+				ContentType:   config.DefaultContentType,
+				Model:         config.DefaultModel,
 				Url:           "https://api.chatanywhere.tech",
-				EndPoint:      defaultEndPoint,
+				EndPoint:      config.DefaultEndPoint,
 				ProxyAddr:     "127.0.0.1:7890",
 				timeout:       0,
 			},
 			args: args{
 				req: Request{
-					Messages: &[]ChatMessage{
+					Messages: []ChatMessage{
 						{
 							Role:    "user",
 							Content: "这是一条测试消息",
@@ -74,6 +75,21 @@ func TestAIClient_SendByFuncCall(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSend(t *testing.T) {
+	resp, err := aiclient.Send(Request{
+		Messages: []ChatMessage{
+			{
+				Role:    "user",
+				Content: "这是一条测试消息",
+			},
+		},
+	})
+	if err != nil {
+		t.Errorf("Send() error = %v", err)
+	}
+	t.Log(resp)
 }
 
 func TestAIClient_Send(t *testing.T) {

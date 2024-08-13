@@ -5,6 +5,7 @@
 package ai_sdk
 
 import (
+	"ai-sdk/config"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -32,15 +33,15 @@ type AIClient struct {
 func NewAIClient(authorization string, model string, sendurl string, proxyAddr string, endPoint string) *AIClient {
 	client := AIClient{
 		Authorization: ensureBearer(authorization),
-		ContentType:   defaultContentType,
+		ContentType:   config.DefaultContentType,
 		Model:         model,
 		Url:           sendurl,
 		EndPoint:      endPoint,
 	}
-	if Config.Timeout < 5 {
+	if config.Config.Timeout < 5 {
 		client.timeout = 5
 	}
-	client.timeout = Config.Timeout
+	client.timeout = config.Config.Timeout
 	client.client = &http.Client{
 		Timeout: time.Duration(client.timeout) * time.Second,
 	}
@@ -171,6 +172,7 @@ func doSend[T DefalutResponse | FunctionCallResponse](a AIClient, request ChatCo
 		response.data = data
 	default:
 		// 处理其他未预期的状态码
+		// nolint
 		return response, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
@@ -179,21 +181,21 @@ func doSend[T DefalutResponse | FunctionCallResponse](a AIClient, request ChatCo
 
 func init() {
 	aiclient = &AIClient{
-		Authorization: "Bearer " + Config.Authorization,
-		ContentType:   Config.ContentType,
-		Model:         Config.Model,
-		Url:           Config.Url,
-		EndPoint:      Config.EndPoint,
+		Authorization: "Bearer " + config.Config.Authorization,
+		ContentType:   config.Config.ContentType,
+		Model:         config.Config.Model,
+		Url:           config.Config.Url,
+		EndPoint:      config.Config.EndPoint,
 	}
-	if Config.Timeout < 5 {
+	if config.Config.Timeout < 5 {
 		aiclient.timeout = 5
 	}
-	aiclient.timeout = Config.Timeout
+	aiclient.timeout = config.Config.Timeout
 	aiclient.client = &http.Client{
 		Timeout: time.Duration(aiclient.timeout) * time.Second,
 	}
-	if Config.ProxyAddr != "" {
-		proxy, err := url.Parse(Config.ProxyAddr)
+	if config.Config.ProxyAddr != "" {
+		proxy, err := url.Parse(config.Config.ProxyAddr)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid proxy URL")
 		} else {

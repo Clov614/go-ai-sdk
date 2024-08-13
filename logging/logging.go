@@ -1,8 +1,8 @@
-// Package ai_sdk
+// Package logging
 // @Author Clover
 // @Data 2024/7/18 上午10:24:00
 // @Desc 日志输出
-package ai_sdk
+package logging
 
 import (
 	"fmt"
