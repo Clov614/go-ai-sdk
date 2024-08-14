@@ -29,7 +29,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/Clov614/go-ai-sdk"
+	ai_sdk "github.com/Clov614/go-ai-sdk"
 )
 
 func main() {
@@ -54,18 +54,22 @@ func main() {
 该项目使用配置文件来管理各种设置，包括会话超时时间和历史记录长度。你可以在 config.yaml 文件中自定义这些设置：
 
 ```yaml
-# OPEN-API-KEY api密钥 (必填)
-authorization: sk-6m0xxxxxxx5pxxc
 # 默认: application/json
 content_type: application/json
 # 使用的模型ID 默认: gpt-4o-mini
 model: gpt-4o-mini
-# api地址 默认: https://api.openai.com/v1/chat/completions
-api_url: https://api.openai.com/v1/chat/completions
 # 请求节点 默认: /v1/chat/completions
 end_point: /v1/chat/completions
-# 请求超时时间，单位秒，默认 5s
-timeout: 0
+# API 配置列表
+configs:
+  - # api地址 默认: https://api.openai.com/v1/chat/completions
+    api_url: https://api.openai.com/v1/chat/completions
+    # OPEN-API-KEY api密钥列表 (必填)
+    authorization_list:
+      - sk-xxxxxx
+      - sk-xxxxxx
+# 请求超时时间，单位秒，默认 10s
+timeout: 30
 # 最大上下文长度 默认: 10
 history_num: 10
 # 对话会话超时时间 单位: 分钟 默认: 2 minute
