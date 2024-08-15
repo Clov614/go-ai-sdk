@@ -265,6 +265,14 @@ func TestFuncCall(t *testing.T) {
 			},
 			allowBlank: false,
 		},
+		{
+			name: "talk test01",
+			args: args{
+				sessionId: "cly",
+				content:   "接下来几天的天气呢",
+			},
+			allowBlank: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

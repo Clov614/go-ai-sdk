@@ -60,18 +60,18 @@ type Forecast struct {
 
 // Cast 表示某一天的天气预报
 type Cast struct {
-	Date           string  `json:"date"`            // 日期，如 "2024-08-15"
-	Week           string  `json:"week"`            // 星期几，1-7 分别表示周一到周日
-	DayWeather     string  `json:"dayweather"`      // 白天天气情况
-	NightWeather   string  `json:"nightweather"`    // 夜间天气情况
-	DayTemp        string  `json:"daytemp"`         // 白天温度（摄氏度）
-	NightTemp      string  `json:"nighttemp"`       // 夜间温度（摄氏度）
-	DayWind        string  `json:"daywind"`         // 白天风向
-	NightWind      string  `json:"nightwind"`       // 夜间风向
-	DayPower       string  `json:"daypower"`        // 白天风力等级
-	NightPower     string  `json:"nightpower"`      // 夜间风力等级
-	DayTempFloat   float64 `json:"daytemp_float"`   // 白天温度的浮点数表示
-	NightTempFloat float64 `json:"nighttemp_float"` // 夜间温度的浮点数表示
+	Date           string `json:"date"`            // 日期，如 "2024-08-15"
+	Week           string `json:"week"`            // 星期几，1-7 分别表示周一到周日
+	DayWeather     string `json:"dayweather"`      // 白天天气情况
+	NightWeather   string `json:"nightweather"`    // 夜间天气情况
+	DayTemp        string `json:"daytemp"`         // 白天温度（摄氏度）
+	NightTemp      string `json:"nighttemp"`       // 夜间温度（摄氏度）
+	DayWind        string `json:"daywind"`         // 白天风向
+	NightWind      string `json:"nightwind"`       // 夜间风向
+	DayPower       string `json:"daypower"`        // 白天风力等级
+	NightPower     string `json:"nightpower"`      // 夜间风力等级
+	DayTempFloat   string `json:"daytemp_float"`   // 白天温度的浮点数表示
+	NightTempFloat string `json:"nighttemp_float"` // 夜间温度的浮点数表示
 }
 
 // GeocodeResponse 表示地理编码查询接口的响应结构体

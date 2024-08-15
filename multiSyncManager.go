@@ -116,48 +116,49 @@ func (s *sessionInfo) Talk(content string) (string, error) {
 	go func() {
 		s.survivalSignal <- struct{}{} // 确保在会话期间存活
 	}()
-	answers, err := s.history.handleQuestion(content, func(msgs []Message, tools *[]Tool) (answerList answerList, err error) {
+	answers, err := s.history.handleQuestion(content, func(msgs answerList, tools *[]Tool) (retAnswers answerList, err error) {
 		if tools != nil && len(*tools) != 0 { // 发起 function_call // todo 重构这部分
 			funcCallResp, err := aiclient.Send(Request{Messages: msgs, Tools: tools, ToolChoice: "auto"})
 			if err != nil {
-				return answerList, fmt.Errorf("function call aiclient.Send err: %w", err)
+				return retAnswers, fmt.Errorf("function call aiclient.Send err: %w", err)
 			}
 			var answer Message
 			answer.Role = assistantRole
 			answer.Content = funcCallResp.data.Choices[0].Message.Content
+			answer.ToolCalls = funcCallResp.data.Choices[0].Message.ToolCalls
 			if funcCallResp.data.Choices[0].FinishReason != ToolsCallFinishReason { // 不是调用回调方法
-				return append(answerList, answer), nil // 普通返回
+				return answerList{answer}, nil // 普通返回 返回一条答案
 			}
-			toolCalls := funcCallResp.data.Choices[0].Message.ToolCalls
-			answer.ToolCalls = toolCalls
-			msgs = append(msgs, answer) // tool answer
-			for _, call := range toolCalls {
+			retAnswers = append(retAnswers, answer) // tool answer
+			for _, call := range answer.ToolCalls {
 				callInfo := FuncRegister.GetCallInfo(call.Function.Name)
 				toolMsg, err := callInfo.Call(call.ID, call.Function.Arguments) // 请求外部函数
 				if err != nil {
-					answerList = append(answerList, answer)
-					return answerList, fmt.Errorf("function call call err: %w", err)
+					return retAnswers, fmt.Errorf("function call call err: %w", err)
 				}
-				msgs = append(msgs, toolMsg) // 将tools答案添加回 msg—history
+				retAnswers = append(retAnswers, toolMsg) // 将tools答案添加回 msg—history
 			}
 			// 携带tools上下文再次请求
 			funcCallResp, err = aiclient.Send(Request{Messages: msgs, Tools: nil, ToolChoice: ""})
 			if err != nil {
-				return answerList, fmt.Errorf("function call aiclient.Send second err: %w", err)
+				return retAnswers, fmt.Errorf("function call aiclient.Send second err: %w", err)
 			}
+			answer.ToolCalls = nil
 			answer.Role = assistantRole
 			answer.Content = funcCallResp.data.Choices[0].Message.Content
-
-			return append(answerList, answer), nil
+			retAnswers = append(retAnswers, answer)
+			return retAnswers, nil
 		}
 		resp, err := aiclient.Send(Request{Messages: msgs})
 		if err != nil {
-			return answerList, fmt.Errorf("aiclient.Send err: %w", err)
+			return retAnswers, fmt.Errorf("aiclient.Send err: %w", err)
 		}
 		var answer Message
 		answer.Role = assistantRole
 		answer.Content = resp.data.Choices[0].Message.Content
-		return append(answerList, answer), nil
+		answer.ToolCalls = nil // 第三个answer ToolCalls置空
+		retAnswers = append(retAnswers, answer)
+		return retAnswers, nil
 	})
 	if err != nil {
 		return "", fmt.Errorf("talkById err: %w", err)
@@ -210,13 +211,16 @@ type dialogEntry struct {
 type answerList []Message
 
 // 处理普通问题
-func (h *history) handleQuestion(content string, handleFunc func(msgs []Message, tools *[]Tool) (answers answerList, err error)) (answers answerList, err error) {
+func (h *history) handleQuestion(content string, handleFunc func(msgs answerList, tools *[]Tool) (answers answerList, err error)) (answers answerList, err error) {
 	msgs := h.getMessage()
 	question := Message{
 		Role:    userRole,
 		Content: content,
 	}
 	tools := FuncRegister.GetToolsByContent(content)
+	//if tools != nil {
+	//	question.ToolCalls = tools
+	//}
 	answers, err = handleFunc(append(msgs, question), tools)
 	if err != nil {
 		return answers, fmt.Errorf("handleQuestion handleMessage err: %w", err)
