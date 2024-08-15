@@ -63,7 +63,7 @@ func TestAIClient_SendByFuncCall(t *testing.T) {
 			},
 			args: args{
 				req: Request{
-					Messages: []ChatMessage{
+					Messages: []Message{
 						{
 							Role:    userRole,
 							Content: "这是一条测试消息",
@@ -116,7 +116,7 @@ func TestAIClient_SendByFuncCall(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	resp, err := aiclient.Send(Request{
-		Messages: []ChatMessage{
+		Messages: []Message{
 			{
 				Role:    "user",
 				Content: "这是一条测试消息",

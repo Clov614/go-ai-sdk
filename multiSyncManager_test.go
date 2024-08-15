@@ -5,7 +5,10 @@
 package ai_sdk
 
 import (
+	"flag"
 	"fmt"
+	"github.com/Clov614/go-ai-sdk/example_func_call/weather"
+	"github.com/Clov614/go-ai-sdk/global"
 	"reflect"
 	"testing"
 	"time"
@@ -162,7 +165,7 @@ func Test_history_addLast(t *testing.T) {
 		maxHistory: 10,
 		dialog:     make([]dialogEntry, 0),
 		msgListNum: 0,
-		msgList:    make([]ChatMessage, 0),
+		msgList:    make([]Message, 0),
 	}
 	type args struct {
 		entry dialogEntry
@@ -182,13 +185,15 @@ func Test_history_addLast(t *testing.T) {
 			name: fmt.Sprintf("容量控制测试 %d", i),
 			args: args{
 				entry: dialogEntry{
-					question: ChatMessage{
+					question: Message{
 						Role:    userRole,
 						Content: fmt.Sprintf("测试 %d", i),
 					},
-					answer: ChatMessage{
-						Role:    assistantRole,
-						Content: fmt.Sprintf("测试 %d", i),
+					answerList: []Message{
+						{
+							Role:    assistantRole,
+							Content: fmt.Sprintf("测试 %d", i),
+						},
 					},
 				},
 			},
@@ -201,6 +206,78 @@ func Test_history_addLast(t *testing.T) {
 			h.addLast(tt.args.entry)
 			if len(h.dialog) > h.maxHistory {
 				t.Errorf("len(h.dialog) > maxHistory")
+			}
+		})
+	}
+}
+
+var key *string
+
+func init() {
+	key = flag.String("apikey", "", "天气api请求key")
+
+}
+
+func TestFuncCall(t *testing.T) {
+	// 注册天气func_call
+	flag.Parse()
+	w := weather.NewWeather(*key)
+	funcCallInfo := FuncCallInfo{
+		Function: Function{
+			Name:        "get_weather_by_city",
+			Description: "根据地址获取城市代码 cityAddress: 城市地址，如: 泉州市永春县 isMultiDay: 是否获取多日天气",
+			Parameters: FunctionParameter{
+				Type: global.ObjType,
+				Properties: Properties{
+					"city_addr": Property{
+						Type:        global.StringType,
+						Description: "地址，如：国家，城市，县、区地址",
+					},
+					"is_multi": Property{
+						Type:        global.BoolType,
+						Description: "是否获取多日天气",
+					},
+				},
+				Required: []string{"city_addr", "is_multi"},
+			},
+			Strict: false,
+		},
+		CallFunc: w,
+		//CustomTrigger: nil, // 暂时不测试
+	}
+	FuncRegister.Register(&funcCallInfo, []string{"天气", "weather"})
+
+	type args struct {
+		sessionId string
+		content   string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		allowBlank bool
+		wantErr    bool
+	}{
+		{
+			name: "talk test01",
+			args: args{
+				sessionId: "cly",
+				content:   "今天泉州的天气怎么样",
+			},
+			allowBlank: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := DefaultSession
+			got, err := s.TalkById(tt.args.sessionId, tt.args.content)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TalkById() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.allowBlank && got == "" {
+				t.Errorf("TalkById() got = %v\n allowBlank = %v\n", got, tt.allowBlank)
+			} else {
+				t.Logf("TalkById() got = %v\n allowBlank = %v\n", got, tt.allowBlank)
 			}
 		})
 	}

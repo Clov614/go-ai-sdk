@@ -15,6 +15,7 @@ const (
 	systemRole    = "system"
 	userRole      = "user"
 	assistantRole = "assistant"
+	toolRole      = "tool"
 )
 
 // Session 会话主体 （k-v 会话id-会话信息）
@@ -115,19 +116,53 @@ func (s *sessionInfo) Talk(content string) (string, error) {
 	go func() {
 		s.survivalSignal <- struct{}{} // 确保在会话期间存活
 	}()
-	answer, err := s.history.handleQuestion(content, func(msgs []ChatMessage) (answer ChatMessage, err error) {
+	answers, err := s.history.handleQuestion(content, func(msgs []Message, tools *[]Tool) (answerList answerList, err error) {
+		if tools != nil && len(*tools) != 0 { // 发起 function_call // todo 重构这部分
+			funcCallResp, err := aiclient.Send(Request{Messages: msgs, Tools: tools, ToolChoice: "auto"})
+			if err != nil {
+				return answerList, fmt.Errorf("function call aiclient.Send err: %w", err)
+			}
+			var answer Message
+			answer.Role = assistantRole
+			answer.Content = funcCallResp.data.Choices[0].Message.Content
+			if funcCallResp.data.Choices[0].FinishReason != ToolsCallFinishReason { // 不是调用回调方法
+				return append(answerList, answer), nil // 普通返回
+			}
+			toolCalls := funcCallResp.data.Choices[0].Message.ToolCalls
+			answer.ToolCalls = toolCalls
+			msgs = append(msgs, answer) // tool answer
+			for _, call := range toolCalls {
+				callInfo := FuncRegister.GetCallInfo(call.Function.Name)
+				toolMsg, err := callInfo.Call(call.ID, call.Function.Arguments) // 请求外部函数
+				if err != nil {
+					answerList = append(answerList, answer)
+					return answerList, fmt.Errorf("function call call err: %w", err)
+				}
+				msgs = append(msgs, toolMsg) // 将tools答案添加回 msg—history
+			}
+			// 携带tools上下文再次请求
+			funcCallResp, err = aiclient.Send(Request{Messages: msgs, Tools: nil, ToolChoice: ""})
+			if err != nil {
+				return answerList, fmt.Errorf("function call aiclient.Send second err: %w", err)
+			}
+			answer.Role = assistantRole
+			answer.Content = funcCallResp.data.Choices[0].Message.Content
+
+			return append(answerList, answer), nil
+		}
 		resp, err := aiclient.Send(Request{Messages: msgs})
 		if err != nil {
-			return answer, fmt.Errorf("aiclient.Send err: %w", err)
+			return answerList, fmt.Errorf("aiclient.Send err: %w", err)
 		}
+		var answer Message
 		answer.Role = assistantRole
 		answer.Content = resp.data.Choices[0].Message.Content
-		return answer, nil
+		return append(answerList, answer), nil
 	})
 	if err != nil {
 		return "", fmt.Errorf("talkById err: %w", err)
 	}
-	return answer.Content, nil
+	return answers[len(answers)-1].Content, nil
 }
 
 // 移除会话
@@ -143,10 +178,10 @@ func (s *Session) removeById(id string) (ok bool) {
 // history 上下文
 type history struct {
 	maxHistory int // 最长上下文数量
-	system     ChatMessage
+	system     Message
 	dialog     []dialogEntry // 问答实体类
 	msgListNum int           // 当前上下文长度
-	msgList    []ChatMessage // 转换后请求用上下文
+	msgList    []Message     // 转换后请求用上下文
 	mu         sync.Mutex
 }
 
@@ -155,10 +190,10 @@ func newHistory(system string) *history {
 		maxHistory: config.Config.HistoryNum,
 		dialog:     make([]dialogEntry, 0),
 		msgListNum: 0,
-		msgList:    make([]ChatMessage, 0),
+		msgList:    make([]Message, 0),
 	}
 	if system != "" {
-		h.system = ChatMessage{
+		h.system = Message{
 			Role:    systemRole,
 			Content: system,
 		}
@@ -168,23 +203,26 @@ func newHistory(system string) *history {
 
 // 问答实体类
 type dialogEntry struct {
-	question ChatMessage
-	answer   ChatMessage
+	question Message
+	answerList
 }
 
-// 处理问题
-func (h *history) handleQuestion(content string, handleFunc func(msgs []ChatMessage) (answer ChatMessage, err error)) (answer ChatMessage, err error) {
-	msgs := h.getChatMessage()
-	question := ChatMessage{
+type answerList []Message
+
+// 处理普通问题
+func (h *history) handleQuestion(content string, handleFunc func(msgs []Message, tools *[]Tool) (answers answerList, err error)) (answers answerList, err error) {
+	msgs := h.getMessage()
+	question := Message{
 		Role:    userRole,
 		Content: content,
 	}
-	answer, err = handleFunc(append(msgs, question))
+	tools := FuncRegister.GetToolsByContent(content)
+	answers, err = handleFunc(append(msgs, question), tools)
 	if err != nil {
-		return answer, fmt.Errorf("handleQuestion handleMessage err: %w", err)
+		return answers, fmt.Errorf("handleQuestion handleMessage err: %w", err)
 	}
-	h.addLast(dialogEntry{question: question, answer: answer})
-	return answer, err
+	h.addLast(dialogEntry{question: question, answerList: answers})
+	return answers, err
 }
 
 // concurrent unsafe 删除最早的一条对话记录
@@ -213,7 +251,7 @@ func (h *history) addLast(entry dialogEntry) {
 	h.dialog = append(h.dialog, entry)
 }
 
-func (h *history) getChatMessage() (msg []ChatMessage) {
+func (h *history) getMessage() (msg []Message) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	dialogLen := len(h.dialog)
@@ -226,14 +264,14 @@ func (h *history) getChatMessage() (msg []ChatMessage) {
 	for h.msgListNum < dialogLen {
 		// 添加会话
 		h.msgList = append(h.msgList, h.dialog[h.msgListNum].question)
-		h.msgList = append(h.msgList, h.dialog[h.msgListNum].answer)
+		h.msgList = append(h.msgList, h.dialog[h.msgListNum].answerList...)
 		h.msgListNum++
 	}
 	// 返回一个 h.msgList 的副本
-	return append([]ChatMessage(nil), h.msgList...)
+	return append([]Message(nil), h.msgList...)
 }
 
-//func (h *history) removeLastQuestion() (question ChatMessage, ok bool) {
+//func (h *history) removeLastQuestion() (question Message, ok bool) {
 //	h.mu.Lock()
 //	defer h.mu.Unlock()
 //	last := (*h.msgList)[len(*h.msgList) - 1]

@@ -40,12 +40,6 @@ type Choice struct {
 	FinishReason string      `json:"finish_reason"`
 }
 
-type Message struct {
-	Role      string     `json:"role"`
-	Content   string     `json:"content,omitempty"` // Content可能为null
-	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
-}
-
 type ToolCall struct {
 	ID       string       `json:"id"`
 	Type     string       `json:"type"`

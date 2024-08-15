@@ -5,31 +5,39 @@
 package ai_sdk
 
 type Request struct {
-	Messages   []ChatMessage
+	Messages   []Message
 	Tools      *[]Tool
 	ToolChoice string
 }
 
 type ChatCompletionRequest struct {
-	Model      string        `json:"model"`
-	Messages   []ChatMessage `json:"messages"`
-	Tools      *[]Tool       `json:"tools,omitempty"`       // 可选
-	ToolChoice string        `json:"tool_choice,omitempty"` // 默认 auto
+	Model      string    `json:"model"`
+	Messages   []Message `json:"messages"`
+	Tools      *[]Tool   `json:"tools,omitempty"`       // 可选
+	ToolChoice string    `json:"tool_choice,omitempty"` // 默认 auto
 }
 
-type ChatMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+const (
+	ToolsCallFinishReason = "tool_calls" // 方法调用
+)
+
+type Message struct {
+	Role       string     `json:"role"`
+	Content    string     `json:"content,omitempty"`      // Content可能为null
+	ToolCallID string     `json:"tool_call_id,omitempty"` // 用于关联工具调用
+	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
 }
 
 // region FunctionCall Request
 
 // FunctionParameter 定义函数参数类型
 type FunctionParameter struct {
-	Type       string              `json:"type"`
-	Properties map[string]Property `json:"properties"`
-	Required   []string            `json:"required"`
+	Type       string `json:"type"`
+	Properties `json:"properties"`
+	Required   []string `json:"required"`
 }
+
+type Properties map[string]Property
 
 // Property 定义函数属性类型
 type Property struct {
@@ -40,7 +48,7 @@ type Property struct {
 
 // Tool 定义函数类型的工具
 type Tool struct {
-	Type     string   `json:"type"`
+	Type     string   `json:"type"` // 默认function
 	Function Function `json:"function"`
 }
 
@@ -49,6 +57,7 @@ type Function struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
 	Parameters  FunctionParameter `json:"parameters"`
+	Strict      bool              `json:"strict"` // 是否严格 JSON 输出
 }
 
 //endregion

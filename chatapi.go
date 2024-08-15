@@ -89,6 +89,12 @@ func (a AIClient) Send(req Request) (resp Response[DefalutResponse], err error) 
 	return resp, nil
 }
 
+//func (a AIClient) SendFuncCall(content string, tools *[]Tool) (resp Response[DefalutResponse], err error) {
+//
+//}
+
+// SendByFuncCall  使用 Send默认调用就可以支持 Function_Call
+// deprecated
 func (a AIClient) SendByFuncCall(req Request) (resp Response[FunctionCallResponse], err error) {
 	resp, err = doSend[FunctionCallResponse](a, a.convertReq(req))
 	if err != nil {

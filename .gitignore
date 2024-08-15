@@ -17,3 +17,5 @@ dist
 **/test_img.*
 # 忽略所有data目录
 **/data
+
+.idea
