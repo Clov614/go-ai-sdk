@@ -40,6 +40,7 @@ type Live struct {
 }
 
 // MultiDayWeatherResponse 表示多日天气预报接口的响应结构体
+// nolint
 type MultiDayWeatherResponse struct {
 	Status    string     `json:"status"`    // 请求状态码，1 表示成功
 	Count     string     `json:"count"`     // 返回结果数
@@ -74,6 +75,7 @@ type Cast struct {
 }
 
 // GeocodeResponse 表示地理编码查询接口的响应结构体
+// nolint
 type GeocodeResponse struct {
 	Status   string    `json:"status"`   // 请求状态码，1 表示成功
 	Info     string    `json:"info"`     // 返回状态说明，如 "OK"

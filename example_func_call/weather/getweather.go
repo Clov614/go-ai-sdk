@@ -28,10 +28,11 @@ type Weather struct {
 	key    string
 }
 
+// nolint
 type DefaultWeatherResp struct {
-	WeatherResponse
-	MultiDayWeatherResponse
-	Err error
+	WeatherResponse         `json:"-"`
+	MultiDayWeatherResponse `json:"-"`
+	Err                     error
 }
 
 func NewWeather(apikey string) *Weather {
@@ -107,11 +108,19 @@ func (w *Weather) GetWeatherByCityAddr(cityAddr string, isMultiDay bool) (weathe
 	if isMultiDay {
 		var multiResp MultiDayWeatherResponse
 		err = json.Unmarshal(respBody, &multiResp)
+		if err != nil {
+			weatherResp.Err = fmt.Errorf("%w Unmarshal err: %w", GetWeatherErr, err)
+			return
+		}
 		weatherResp.MultiDayWeatherResponse = multiResp
 		return
 	}
 	var resp WeatherResponse
 	err = json.Unmarshal(respBody, &resp)
+	if err != nil {
+		weatherResp.Err = fmt.Errorf("%w Unmarshal err: %w", GetWeatherErr, err)
+		return
+	}
 	weatherResp.WeatherResponse = resp
 	return
 }
