@@ -23,7 +23,7 @@ type Session struct {
 	globalSurvivalLimit time.Duration
 	systemContent       string // 预设消息
 	cache               map[string]*sessionInfo
-	mu                  sync.Mutex
+	mu                  sync.RWMutex
 }
 
 func NewSession(systemSet string, persessionTimeOut int) *Session {
@@ -51,18 +51,19 @@ type sessionInfo struct {
 
 // GetSession 获取唯一会话
 func (s *Session) GetSession(sessionId string) *sessionInfo {
-	s.mu.Lock()
+	s.mu.RLock()
 	if info, ok := s.cache[sessionId]; ok { // 判断会话列表中是否存在该id（存在则不创建，直接返回）
-		s.mu.Unlock()
+		s.mu.RUnlock()
 		return info
 	}
-	s.mu.Unlock()
+	s.mu.RUnlock()
 	return s.newSession(sessionId)
 }
 
 // 新创建的会话启动计时器，并通过存活信号量刷新计时器，超时移除该会话(注意goroutine泄露问题)
 func (s *Session) newSession(sessionId string) *sessionInfo {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	info := &sessionInfo{
 		sessionId:      sessionId,
 		history:        newHistory(s.systemContent),
@@ -72,8 +73,7 @@ func (s *Session) newSession(sessionId string) *sessionInfo {
 		done:           make(chan struct{}),
 	}
 	s.cache[sessionId] = info
-	s.mu.Unlock()
-	s.checkSurvival(info) // 超时检测
+	go s.checkSurvival(info) // 超时检测
 	return info
 }
 
