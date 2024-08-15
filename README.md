@@ -22,7 +22,8 @@ go get github.com/Clov614/go-ai-sdk
 ```
 
 ## 使用方法
-下面是一个使用 go-ai-sdk 的基本示例：
+
+### 基本示例
 
 ```go
 package main
@@ -49,6 +50,65 @@ func main() {
 	fmt.Println("AI 响应:", response)
 }
 ```
+
+### 使用插件扩展 AI 功能
+以下代码展示了如何使用函数注册器将自定义功能（如查询天气）注册到 SDK 中：
+
+```go
+package ai
+
+import (
+	"encoding/json"
+	ai_sdk "github.com/Clov614/go-ai-sdk"
+	"github.com/Clov614/go-ai-sdk/example_func_call/weather"
+	"github.com/Clov614/go-ai-sdk/global"
+	"wechat-demo/rikkabot/config"
+	"wechat-demo/rikkabot/logging"
+)
+
+type weatherCfg struct {
+	Key string `json:"key"`
+}
+
+func init() {
+	// 注册对话插件
+	cfg := config.GetConfig()
+	wCfgInterface, ok := cfg.GetCustomPluginCfg("weather_ai")
+	if !ok {
+		cfg.SetCustomPluginCfg("weather_ai", weatherCfg{Key: ""})
+		_ = cfg.Update() // 更新设置
+		logging.Fatal("weather_ai plugin config loaded empty. Please write the weather API key in config.yaml", 12)
+	}
+	bytes, _ := json.Marshal(wCfgInterface)
+	var wcfg weatherCfg
+	json.Unmarshal(bytes, &wcfg)
+	w := weather.NewWeather(wcfg.Key)
+	funcCallInfo := ai_sdk.FuncCallInfo{
+		Function: ai_sdk.Function{
+			Name:        "get_weather_by_city",
+			Description: "根据地址获取城市代码 cityAddress: 城市地址，如: 泉州市永春县 isMultiDay: 是否获取多日天气",
+			Parameters: ai_sdk.FunctionParameter{
+				Type: global.ObjType,
+				Properties: ai_sdk.Properties{
+					"city_addr": ai_sdk.Property{
+						Type:        global.StringType,
+						Description: "地址，如：国家，城市，县、区地址",
+					},
+					"is_multi": ai_sdk.Property{
+						Type:        global.BoolType,
+						Description: "是否获取多日天气",
+					},
+				},
+				Required: []string{"city_addr", "is_multi"},
+			},
+			Strict: false,
+		},
+		CallFunc: w,
+	}
+	ai_sdk.FuncRegister.Register(&funcCallInfo, []string{"天气", "weather"})
+}
+```
+在上述代码中，关键词如“天气”或“weather”会自动触发工具函数调用，为 AI 提供额外的能力。
 
 ## 配置
 该项目使用配置文件来管理各种设置，包括会话超时时间和历史记录长度。你可以在 config.yaml 文件中自定义这些设置：
