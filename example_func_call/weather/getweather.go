@@ -60,7 +60,7 @@ func (w *Weather) Call(params string) (jsonStr string, err error) {
 	if resp.Err != nil {
 		return "", fmt.Errorf("call_err: GetWeatherByCityAddr() error: %w", resp.Err)
 	}
-	bytes, err := json.Marshal(resp)
+	bytes, err := json.Marshal(resp) // nolint
 	if err != nil {
 		return "", fmt.Errorf("call_err: %w json.Marshal() error: %w", GetWeatherErr, err)
 	}
