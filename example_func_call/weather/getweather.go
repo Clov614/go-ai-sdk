@@ -30,9 +30,9 @@ type Weather struct {
 
 // nolint
 type DefaultWeatherResp struct {
-	WeatherResponse         `json:"-"`
-	MultiDayWeatherResponse `json:"-"`
-	Err                     error
+	WeatherResponse
+	MultiDayWeatherResponse
+	Err error
 }
 
 func NewWeather(apikey string) *Weather {
