@@ -128,16 +128,17 @@ func doSend[T DefalutResponse | FunctionCallResponse](a AIClient, request ChatCo
 
 apiCfgLoop:
 	for _, apiCfg := range a.ApiCfgList {
-		// 设置请求的req
-		req, err = http.NewRequest(http.MethodPost, apiCfg.Url+a.EndPoint, bytes.NewBuffer(body))
-		if err != nil {
-			log.Error().Err(err).Msg("new request failed")
-			continue
-		}
-		// 转换代理并设置
-		a.transformProxy(apiCfg.ProxyAddr)
-		req.Header.Set("Content-Type", a.ContentType)
+
 		for _, auth := range apiCfg.AuthList {
+			// 设置请求的req
+			req, err = http.NewRequest(http.MethodPost, apiCfg.Url+a.EndPoint, bytes.NewBuffer(body))
+			if err != nil {
+				log.Error().Err(err).Msg("new request failed")
+				continue
+			}
+			// 转换代理并设置
+			a.transformProxy(apiCfg.ProxyAddr)
+			req.Header.Set("Content-Type", a.ContentType)
 			// 根据auth尝试进行请求
 			req.Header.Set("Authorization", ensureBearer(auth))
 			resp, err = a.client.Do(req) // nolint:bodyclose
