@@ -111,6 +111,24 @@ func (s *Session) TalkById(sessionId string, content string) (string, error) {
 	return sessioninfo.Talk(content)
 }
 
+// IsExist 该对话是否存在
+func (s *Session) IsExist(sessionId string) bool {
+	s.mu.RLock()
+	_, ok := s.cache[sessionId]
+	s.mu.RUnlock()
+	return ok
+}
+
+// AddPreset 追加预设
+func (s *Session) AddPreset(addedpreset string) {
+	s.systemContent = s.systemContent + addedpreset
+}
+
+// ResetPreset 重设预设
+func (s *Session) ResetPreset(preset string) {
+	s.systemContent = preset
+}
+
 // Talk 对该sessionInfo 发起对话
 func (s *sessionInfo) Talk(content string) (string, error) {
 	go func() {
