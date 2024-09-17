@@ -50,23 +50,27 @@ type sessionInfo struct {
 }
 
 // GetSession 获取唯一会话
-func (s *Session) GetSession(sessionId string) *sessionInfo {
+func (s *Session) GetSession(sessionId string, extraOp func() string) *sessionInfo {
 	s.mu.RLock()
 	if info, ok := s.cache[sessionId]; ok { // 判断会话列表中是否存在该id（存在则不创建，直接返回）
 		s.mu.RUnlock()
 		return info
 	}
 	s.mu.RUnlock()
-	return s.newSession(sessionId)
+	return s.newSession(sessionId, extraOp)
 }
 
 // 新创建的会话启动计时器，并通过存活信号量刷新计时器，超时移除该会话(注意goroutine泄露问题)
-func (s *Session) newSession(sessionId string) *sessionInfo {
+func (s *Session) newSession(sessionId string, extraOp func() string) *sessionInfo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	var sysInfo string
+	if nil != extraOp {
+		sysInfo = s.systemContent + "\n" + extraOp() // 预设增加额外信息
+	}
 	info := &sessionInfo{
 		sessionId:      sessionId,
-		history:        newHistory(s.systemContent),
+		history:        newHistory(sysInfo), // 注册消息历史记录
 		startTime:      time.Now(),
 		survivalLimit:  s.globalSurvivalLimit,
 		survivalSignal: make(chan struct{}),
@@ -107,7 +111,13 @@ func (s *Session) checkSurvival(info *sessionInfo) {
 
 // TalkById 根据会话id对话 新增会话来获取会话发起对话
 func (s *Session) TalkById(sessionId string, content string) (string, error) {
-	sessioninfo := s.GetSession(sessionId)
+	sessioninfo := s.GetSession(sessionId, nil)
+	return sessioninfo.Talk(content)
+}
+
+// TalkByIdEx 根据会话id对话 并且允许携带 Ex: 额外的预设信息(拼接入system预设)
+func (s *Session) TalkByIdEx(sessionId string, content string, extraOp func() string) (string, error) {
+	sessioninfo := s.GetSession(sessionId, extraOp)
 	return sessioninfo.Talk(content)
 }
 
