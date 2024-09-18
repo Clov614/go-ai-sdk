@@ -70,19 +70,19 @@ func Test_session_GetSession(t *testing.T) {
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.needSleep { // sleepTest
-				got1 := s.GetSession(tt.args.sessionId)
+				got1 := s.GetSession(tt.args.sessionId, nil)
 				result, err := got1.Talk("你好今天天气怎么样")
 				if err != nil {
 					t.Errorf("GetSession() error = %v", err)
 				}
 				t.Logf("index %d: %s", i, result)
-				got2 := s.GetSession(tt.args.sessionId)
+				got2 := s.GetSession(tt.args.sessionId, nil)
 				if reflect.DeepEqual(got1, got2) {
 					t.Errorf("got1 == got2 want got1 != got2 "+
 						"because the session expired\n got1: %v\n got2: %v\n", got1, got2)
 				}
 			} else {
-				if got := s.GetSession(tt.args.sessionId); got.sessionId != tt.want.sessionId {
+				if got := s.GetSession(tt.args.sessionId, nil); got.sessionId != tt.want.sessionId {
 					t.Errorf("GetSession() = %v, want %v", got, tt.want)
 				}
 			}
