@@ -70,6 +70,16 @@ func (fc *FuncCallRegister) GetToolsByContent(content string) *[]Tool {
 			attackFunction = append(attackFunction, info.Function)
 		}
 	}
+	// 过滤一遍去重
+	existedMap := make(map[string]bool)
+	var tempAttackFuncs = make([]Function, 0)
+	for _, function := range attackFunction {
+		if !existedMap[function.Name] {
+			tempAttackFuncs = append(tempAttackFuncs, function)
+			existedMap[function.Name] = true
+		}
+	}
+	attackFunction = tempAttackFuncs
 	fc.mu.RUnlock()
 	// 封装 tools
 	var tools = make([]Tool, len(attackFunction))
