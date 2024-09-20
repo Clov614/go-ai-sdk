@@ -65,8 +65,9 @@ func (s *Session) newSession(sessionId string, extraOp func() string) *sessionIn
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	var sysInfo string
+	sysInfo = s.systemContent
 	if nil != extraOp {
-		sysInfo = s.systemContent + "\n" + extraOp() // 预设增加额外信息
+		sysInfo += "\n" + extraOp() // 预设增加额外信息
 	}
 	info := &sessionInfo{
 		sessionId:      sessionId,
